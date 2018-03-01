@@ -40,10 +40,12 @@ class ViewController: UIViewController {
     
     let fetchRequest: NSFetchRequest<Team> = Team.fetchRequest()
     
-    let sort = NSSortDescriptor(key: #keyPath(Team.teamName), ascending: true)
-    fetchRequest.sortDescriptors = [sort]
+    let zoneSort = NSSortDescriptor(key: #keyPath(Team.qualifyingZone), ascending: true)
+    let scoreSort = NSSortDescriptor(key: #keyPath(Team.wins), ascending: false)
+    let nameSort = NSSortDescriptor(key: #keyPath(Team.teamName), ascending: true)
+    fetchRequest.sortDescriptors = [zoneSort, scoreSort, nameSort]
     
-    fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: coreDataStack.managedContext, sectionNameKeyPath: nil, cacheName: nil)
+    fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: coreDataStack.managedContext, sectionNameKeyPath: #keyPath(Team.qualifyingZone), cacheName: nil)
     
     do {
       try fetchedResultsController.performFetch()
@@ -93,11 +95,20 @@ extension ViewController: UITableViewDataSource {
 
     return cell
   }
+  
+  func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+    let sectionInfo = fetchedResultsController.sections?[section]
+    return sectionInfo?.name
+  }
 }
 
 // MARK: - UITableViewDelegate
 extension ViewController: UITableViewDelegate {
 
   func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    let team = fetchedResultsController.object(at: indexPath)
+    team.wins = team.wins + 1
+    coreDataStack.saveContext()
+    tableView.reloadData()
   }
 }
